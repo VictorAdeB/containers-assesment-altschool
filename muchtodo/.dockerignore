@@ -1,0 +1,8 @@
+.git
+.gitignore
+node_modules
+docs/swagger.json
+docs/swagger.yaml
+*.log
+.env
+.env.*

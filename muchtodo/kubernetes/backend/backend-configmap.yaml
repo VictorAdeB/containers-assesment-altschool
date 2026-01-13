@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: muchtodo
+data:
+  PORT: "8080"
+  ENABLE_CACHE: "false"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
