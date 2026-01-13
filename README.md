@@ -1,167 +1,117 @@
-# MuchToDo API
 
-A robust RESTful API for a ToDo application built with Go (Golang). This project features user authentication, JWT-based session management, CRUD operations for ToDo items, and an optional Redis caching layer.
+ # MuchToDo API  A robust RESTful API for a ToDo application built with **Golang**, using **MongoDB** for storage. The API supports user authentication, JWT-based sessions, and full CRUD operations for task management.  This guide provides instructions for running the project locally, via Docker Compose, or on a local Kubernetes cluster using Kind.  
+ ---  ## 📋 Table of Contents  
+ - [Prerequisites](#-prerequisites) 
+  - [Local Setup (Windows 11)](#1-local-setup-windows-11) 
+   - [Running with Docker Compose](#2-running-with-docker-compose)  
+   - [Running on Kubernetes (Kind)](#3-running-on-kubernetes-kind)  
+   - [API Endpoints](#4-api-endpoints)  - [Cleaning Up](#5-cleaning-up)  
+   ---  ## 🛠 Prerequisites 
+    Before running the project, ensure you have the following installed:  * **Go 1.21+** ([Download](https://go.dev/doc/install))  
+    * **MongoDB** (Optional if using Docker)  
+    * **Docker Desktop** (Windows 11 with WSL2 backend recommended)  
+    * **Kind** (Kubernetes in Docker)  
+    * **Swag CLI** for API documentation:      
+    ```bash      go install [github.com/swaggo/swag/cmd/swag@latest](https://github.com/swaggo/swag/cmd/swag@latest)      ```  ---  ## 1️⃣ Local Setup (Windows 11) 
 
-The API is built with a clean, layered architecture to separate concerns, making it scalable and easy to maintain. It includes a full suite of unit and integration tests and provides interactive API documentation via Swagger.
+ ### Step 1: Clone the repository  ```bash  git clone   cd container-assessment/MuchToDo   `
 
-## Features
+### Step 2: Configure Environment Variables
 
-* **User Management**: Secure user registration, login, update, and deletion.
-* **Authentication**: JWT-based authentication that supports both `httpOnly` cookies (for web clients) and `Authorization` headers.
-* **CRUD for ToDos**: Full create, read, update, and delete functionality for user-specific ToDo items.
-* **Structured Logging**: Configurable, structured JSON logging with request context for production-ready monitoring.
-* **Optional Caching**: Redis-backed caching layer that can be toggled on or off via environment variables.
-* **API Documentation**: Auto-generated interactive Swagger documentation.
-* **Testing**: Comprehensive unit and integration test suites.
-* **Graceful Shutdown**: The server shuts down gracefully, allowing active requests to complete.
+Create a .env file in the project root:
 
-## Prerequisites
+Code snippet
 
-To run this project locally, you will need the following installed:
+`   PORT=8080  MONGO_URI=mongodb://localhost:27017  DB_NAME=much_todo_db  JWT_SECRET_KEY="your-super-secret-key-that-is-long-and-random"  JWT_EXPIRATION_HOURS=72  ENABLE_CACHE=false  LOG_LEVEL="DEBUG"  LOG_FORMAT="json"   `
 
-* **Go**: Version 1.21 or later.
-* **Swag CLI**: To generate the Swagger API documentation.
-* **Make** (optional, for easier command execution):
+### Step 3: Install Dependencies & Generate Docs
 
-  On macOS, you can install `make` via Homebrew if it's not already available:
+Bash
 
-  ```bash
-  brew install make
-  ```
+`   go mod tidy  swag init -g ./cmd/main.go -o ./docs   `
 
-  On Linux, `make` is usually pre-installed or available via your package manager.
+### Step 4: Run the API
 
-```bash
-go install github.com/swaggo/swag/cmd/swag@latest
-```
+Bash
 
-## Using Make
+`   go run ./cmd/main.go   `
 
-This project includes a `Makefile` to simplify common development tasks. You can use `make <target>` to run commands such as starting the server, building, running tests, and managing Docker containers.
+*   **API Base:** http://localhost:8080
+    
+*   **Swagger Docs:** http://localhost:8080/swagger/index.html
+    
+*   **Health Check:** http://localhost:8080/health
+    
 
-## Getting Started
+2️⃣ Running with Docker Compose
+-------------------------------
 
-### 1. Clone the Repository
+This is the recommended approach for local development to ensure environment parity.
 
-```bash
-git clone <your-repository-url>
-cd much-to-do/Server/MuchToDo
-```
+### Step 1: Create .env.docker
 
-### 2. Configure Environment Variables
+Ensure your MONGO\_URI points to the service name defined in your compose file:
 
-Create a `.env` file in the root of the project by copying the example.
+Code snippet
+`   MONGO_URI=mongodb://mongodb:27017  # ... keep other variables same as .env   `
 
-```bash
-cp .env.example .env
-```
+### Step 2: Build and Start
 
-Now, open the `.env` file and **change the** `JWT_SECRET_KEY` to a new, long, random string.
+Bash
 
-Also, ensure that the `MONGO_URI` and `DB_NAME` points to your local MongoDB instance and db.
+`   docker compose up -d --build   `
 
-You can leave the other variables as they are for local development.
+### Step 3: Verify
 
-### 3. Start Local Dependencies
+*   **Check Logs:** docker compose logs -f
+    
+*   **Access API:** http://localhost:8080/ping
+    
 
-With Docker running, start the MongoDB and Redis containers using Docker Compose.
+3️⃣ Running on Kubernetes (Kind)
+--------------------------------
 
-```bash
-docker-compose up -d
-```
-**Or using Make:**
-```bash
-make dc-up
-```
+### Step 1: Create Kind Cluster
 
-### 4. Install Go Dependencies
+Bash
 
-Download the necessary Go modules.
+`   kind create cluster --name muchtodo   `
 
-```bash
-go mod tidy
-```
-**Or using Make:**
-```bash
-make tidy
-```
+### Step 2: Deploy Infrastructure
 
-### 5. Generate API Documentation
+Bash
 
-Generate the Swagger/OpenAPI documentation from the code comments.
+`   # Deploy MongoDB (Deployment, Service, PVC, ConfigMap, Secret)  kubectl apply -f kubernetes/mongodb/  # Deploy Backend API  kubectl apply -f kubernetes/backend/  # Deploy Ingress (Requires an Ingress Controller installed in Kind)  kubectl apply -f kubernetes/ingress.yaml   `
 
-```bash
-swag init -g cmd/api/main.go
-```
-**Or using Make:**
-```bash
-make generate-docs
-```
+### Step 3: Check Status
 
-### 6. Run the Application
+Bash
 
-You can now run the API server.
+`   kubectl get pods,svc,ingress -n muchtodo   `
 
-```bash
-go run ./cmd/api/main.go
-```
-**Or using Make (also generates docs first):**
-```bash
-make run
-```
+4️⃣ API Endpoints
+-----------------
 
-The server will start, and you should see log output in your terminal.
+**MethodEndpointDescription**GET/pingConnectivity testGET/healthSystem health statusPOST/usersRegister a new userPOST/users/loginAuthenticate and get JWTGET/todosList all user todosPOST/todosCreate a new todoPATCH/todos/:idUpdate an existing todoDELETE/todos/:idRemove a todo
 
-* The API will be available at `http://localhost:8080`.
-* The interactive Swagger documentation will be at `http://localhost:8080/swagger/index.html`.
+> **Note:** For full schema details and request/response examples, visit the Swagger UI at /swagger/index.html.
 
-## Running Tests
+5️⃣ Cleaning Up
+---------------
 
-The project includes both unit and integration tests.
+**Docker Compose:**
 
-### Run Unit Tests
+Bash
+`   docker compose down -v   `
 
-These tests are fast and do not require any external dependencies.
+**Kind Cluster:**
 
-```bash
-go test ./...
-```
-**Or using Make:**
-```bash
-make unit-test
-```
+Bash
+`   kind delete cluster --name muchtodo   `
 
-### Run Integration Tests
+💡 Notes
+--------
 
-These tests require Docker to be running as they spin up their own temporary database and cache containers.
-
-```bash
-INTEGRATION=true go test -v --tags=integration ./...
-```
-**Or using Make:**
-```bash
-make integration-test
-```
-
-The `INTEGRATION=true` environment variable is required to explicitly enable these tests. The `-v` flag provides verbose output.
-
-## Other Useful Make Commands
-
-- **Build the binary:**  
-  ```bash
-  make build
-  ```
-- **Clean build artifacts:**  
-  ```bash
-  make clean
-  ```
-- **Stop Docker containers:**  
-  ```bash
-  make dc-down
-  ```
-- **Restart Docker containers:**  
-  ```bash
-  make dc-restart
-  ```
-
-Refer to the `Makefile` for more available commands.
+*   **Port Conflicts:** If running MongoDB locally, stop the service before starting Docker Compose to avoid port 27017 or 27018 conflicts.
+    
+*   **Documentation:** Always run swag init after changing your API handlers or models to keep the documentation in sync.
