@@ -1,5 +1,7 @@
 
- # MuchToDo API  A robust RESTful API for a ToDo application built with **Golang**, using **MongoDB** for storage. The API supports user authentication, JWT-based sessions, and full CRUD operations for task management.  
+ # MuchToDo API  
+ 
+ ### A robust RESTful API for a ToDo application built with **Golang**, using **MongoDB** for storage. The API supports user authentication, JWT-based sessions, and full CRUD operations for task management.  
  
  
  #### This guide provides instructions for running the project locally, via Docker Compose, or on a local Kubernetes cluster using Kind.  
